@@ -1,9 +1,18 @@
 
 const monthPicker = document.getElementById("monthPicker");
 
-let students = JSON.parse(localStorage.getItem("students")) || [];
-let attendance = JSON.parse(localStorage.getItem("attendance")) || {};
+let students = JSON.parse(localStorage.getItem("students") || "[]");
+let attendance = JSON.parse(localStorage.getItem("attendance") || "{}");
 
+function saveStudents() {
+    localStorage.setItem("students", JSON.stringify(students));
+}
+
+function saveAttendance() {
+    localStorage.setItem("attendance", JSON.stringify(attendance));
+}
+
+// Dastlab 25 ta bo'sh o'quvchi
 if (students.length === 0) {
     for (let i = 1; i <= 25; i++) {
         students.push({
@@ -19,37 +28,24 @@ if (students.length === 0) {
     saveStudents();
 }
 
-function saveStudents() {
-    localStorage.setItem("students", JSON.stringify(students));
-}
-
-function saveAttendance() {
-    localStorage.setItem("attendance", JSON.stringify(attendance));
-}
-
 function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
         '"': "&quot;",
         "'": "&#39;"
-    })[char]);
+    })[c]);
 }
 
 function formatMoney(amount) {
-    return (Number(amount) || 0).toLocaleString("de-DE") + " so‘m";
-}
-
-function formatMoneyInput(amount) {
-    return String(amount || "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return (Number(amount) || 0).toLocaleString("uz-UZ") + " so'm";
 }
 
 function updateTotalFee() {
     const sum = students.reduce(
-        (total, student) => total + (Number(student.monthlyFee) || 0), 0
+        (total, s) => total + (Number(s.monthlyFee) || 0), 0
     );
-
     document.getElementById("totalFee").textContent = formatMoney(sum);
 }
 
@@ -68,28 +64,21 @@ function formatFeeInput(input, id) {
     if (!student) return;
 
     student.monthlyFee = Number(digits) || 0;
-    input.value = formatMoneyInput(digits);
-
+    input.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     saveStudents();
     updateTotalFee();
 }
 
 function changeMark(id, day) {
     const key = `${monthPicker.value}_${id}_${day}`;
-
-    const answer = prompt(
-        "Davomat:\n+ = Keldi\n- = Kelmadi\n0 = Belgini o‘chirish"
-    );
+    const answer = prompt("Davomat:\n+ = Keldi\n- = Kelmadi\n0 = Belgini o'chirish");
 
     if (answer === null) return;
 
-    if (answer === "+") {
-        attendance[key] = "+";
-    } else if (answer === "-") {
-        attendance[key] = "-";
-    } else if (answer === "0") {
-        delete attendance[key];
-    } else {
+    if (answer === "+") attendance[key] = "+";
+    else if (answer === "-") attendance[key] = "-";
+    else if (answer === "0") delete attendance[key];
+    else {
         alert("Faqat +, - yoki 0 kiriting!");
         return;
     }
@@ -109,7 +98,6 @@ function render() {
         "Chorshanba", "Payshanba", "Juma", "Shanba"
     ];
 
-    // HAFTA KUNLARI TEPADA
     let head = `
         <tr>
             <th rowspan="2">№</th>
@@ -118,16 +106,12 @@ function render() {
             <th rowspan="2">Yil</th>
             <th rowspan="2">Telefon</th>
             <th rowspan="2">Ota-ona</th>
-            <th rowspan="2">To‘lov</th>
+            <th rowspan="2">To'lov</th>
     `;
 
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month - 1, day);
-        head += `
-            <th class="day-column">
-                <span class="weekday-name">${weekdays[date.getDay()]}</span>
-            </th>
-        `;
+        head += `<th>${weekdays[date.getDay()]}</th>`;
     }
 
     head += `
@@ -137,13 +121,11 @@ function render() {
         <tr>
     `;
 
-    // SANALAR RAQAMI TEPADA EMAS, PASTKI SARLAVHA QATORIDA
     for (let day = 1; day <= daysInMonth; day++) {
-        head += `<th class="date-number">${day}</th>`;
+        head += `<th>${day}</th>`;
     }
 
-    head += `</tr>`;
-
+    head += "</tr>";
     document.getElementById("tableHead").innerHTML = head;
 
     let body = "";
@@ -167,7 +149,7 @@ function render() {
                     onchange="editStudent(${student.id}, 'phone', this.value)"></td>
                 <td><input class="student-input" value="${escapeHTML(student.parent)}"
                     onchange="editStudent(${student.id}, 'parent', this.value)"></td>
-                <td><input class="student-input" value="${formatMoneyInput(student.monthlyFee)}"
+                <td><input class="student-input" value="${Number(student.monthlyFee) || 0}"
                     oninput="formatFeeInput(this, ${student.id})"></td>
         `;
 
@@ -181,7 +163,7 @@ function render() {
             const cls = mark === "+" ? "present" : mark === "-" ? "absent" : "";
 
             row += `
-                <td class="attendance-cell ${cls} mark"
+                <td class="attendance-cell ${cls}"
                     onclick="changeMark(${student.id}, ${day})">${mark}</td>
             `;
         }
@@ -189,17 +171,11 @@ function render() {
         totalPresent += presentCount;
         totalAbsent += absentCount;
 
-        row += `
-            <td>${presentCount}</td>
-            <td>${absentCount}</td>
-            </tr>
-        `;
-
+        row += `<td>${presentCount}</td><td>${absentCount}</td></tr>`;
         body += row;
     });
 
     document.getElementById("tableBody").innerHTML = body;
-
     document.getElementById("total").textContent = students.length;
     document.getElementById("present").textContent = totalPresent;
     document.getElementById("absent").textContent = totalAbsent;
@@ -209,7 +185,8 @@ function render() {
 
 function addStudent() {
     const newId = students.length
-        ? Math.max(...students.map(s => s.id)) + 1 : 1;
+        ? Math.max(...students.map(s => s.id)) + 1
+        : 1;
 
     students.push({
         id: newId,
@@ -226,20 +203,15 @@ function addStudent() {
 }
 
 function removeStudent() {
-    const number = prompt("Qaysi raqamdagi o‘quvchini o‘chirmoqchisiz?");
-    if (number === null) return;
-
-    const index = Number(number) - 1;
-
-    if (!Number.isInteger(index) || index < 0 || index >= students.length) {
-        alert("Bunday o‘quvchi yo‘q!");
+    const number = Number(prompt("Qaysi raqamdagi o'quvchini o'chirmoqchisiz?"));
+    if (!Number.isInteger(number) || number < 1 || number > students.length) {
+        alert("Bunday o'quvchi yo'q!");
         return;
     }
 
-    const student = students[index];
+    if (!confirm(`${number}-o'quvchini o'chirasizmi?`)) return;
 
-    if (!confirm(`${number}-o‘quvchini o‘chirasizmi?`)) return;
-
+    const student = students[number - 1];
     students = students.filter(s => s.id !== student.id);
 
     Object.keys(attendance).forEach(key => {
@@ -254,10 +226,8 @@ function removeStudent() {
 }
 
 const now = new Date();
-
 monthPicker.value =
     `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
 monthPicker.addEventListener("change", render);
-
 render();
