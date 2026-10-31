@@ -1,60 +1,41 @@
+
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Davomat jurnali</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Davomat jurnali</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="top">
-    <div>
-      <h1>DAVOMAT JURNALI</h1>
-      <p>O‘quvchilar davomadini boshqarish</p>
-    </div>
-    <label class="month-label">Oy:
-      <input type="month" id="monthPicker">
-    </label>
-  </header>
 
-  <main>
+<header>
+    <h1>📚 DAVOMAT JURNALI</h1>
+    <p>O‘quvchilar davomati</p>
+</header>
+
+<main>
+    <section class="controls">
+        <input type="month" id="monthPicker">
+        <button onclick="addStudent()">+ O‘quvchi qo‘shish</button>
+        <button class="delete-btn" onclick="removeStudent()">− O‘quvchini ayirish</button>
+    </section>
+
     <section class="stats">
-      <article><span>O‘quvchilar</span><strong id="studentTotal">25</strong></article>
-      <article><span>Belgilangan “+”</span><strong id="presentTotal">0</strong></article>
-      <article><span>Belgilangan “−”</span><strong id="absentTotal">0</strong></article>
+        <div>O‘quvchilar: <b id="total">0</b></div>
+        <div>Kelgan: <b id="present">0</b></div>
+        <div>Kelmagan: <b id="absent">0</b></div>
+        <div>Jami oylik to‘lov: <b id="totalFee">0 so‘m</b></div>
     </section>
 
-    <section class="panel">
-      <div class="panel-heading">
-        <div>
-          <h2>O‘quvchilar davomati</h2>
-          <p>Katakni bosing va +, − yoki bo‘sh holatni tanlang.</p>
-        </div>
-        <button id="resetMonth" class="secondary">Oyni tozalash</button>
-      </div>
-      <div class="table-wrap">
-        <table id="attendanceTable">
-          <thead id="tableHead"></thead>
-          <tbody id="tableBody"></tbody>
+    <div class="table-container">
+        <table>
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
         </table>
-      </div>
-      <p class="hint">Eslatma: bu birinchi sinov nusxasi. Hozircha ma’lumotlar shu brauzerda saqlanadi. Keyingi bosqichda internetdagi Firebase bazasiga ulaymiz.</p>
-    </section>
-  </main>
+    </div>
+</main>
 
-  <dialog id="markDialog">
-    <form method="dialog" class="dialog-content">
-      <h3>Davomat belgisini tanlang</h3>
-      <p id="selectedInfo"></p>
-      <div class="choices">
-        <button type="button" class="choice present" data-mark="+">+ Kelgan</button>
-        <button type="button" class="choice absent" data-mark="-">− Kelmagan</button>
-        <button type="button" class="choice clear" data-mark="">Bo‘sh</button>
-      </div>
-      <button class="close secondary">Yopish</button>
-    </form>
-  </dialog>
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

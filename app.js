@@ -1,102 +1,263 @@
-// Sinov uchun 25 ta bo‘sh o‘quvchi qatori.
-const students = Array.from({ length: 25 }, (_, i) => ({
-  id: i + 1, name: `O‘quvchi ${i + 1}`, className: "", year: "", number: "", parent: ""
-}));
 
 const monthPicker = document.getElementById("monthPicker");
-const tableHead = document.getElementById("tableHead");
-const tableBody = document.getElementById("tableBody");
-const dialog = document.getElementById("markDialog");
-const selectedInfo = document.getElementById("selectedInfo");
 
-const now = new Date();
-monthPicker.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+let students = JSON.parse(localStorage.getItem("students")) || [];
+let attendance = JSON.parse(localStorage.getItem("attendance")) || {};
 
-let selectedCell = null;
-let attendance = JSON.parse(localStorage.getItem("davomat-demo") || "{}");
-
-function monthKey() { return monthPicker.value; }
-function daysInMonth() {
-  const [year, month] = monthKey().split("-").map(Number);
-  return new Date(year, month, 0).getDate();
+if (students.length === 0) {
+    for (let i = 1; i <= 25; i++) {
+        students.push({
+            id: i,
+            name: "",
+            className: "",
+            year: "",
+            phone: "",
+            parent: "",
+            monthlyFee: 0
+        });
+    }
+    saveStudents();
 }
-function save() {
-  localStorage.setItem("davomat-demo", JSON.stringify(attendance));
+
+function saveStudents() {
+    localStorage.setItem("students", JSON.stringify(students));
 }
-function cellKey(studentId, day) { return `${monthKey()}_${studentId}_${day}`; }
+
+function saveAttendance() {
+    localStorage.setItem("attendance", JSON.stringify(attendance));
+}
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+}
+
+function formatMoney(amount) {
+    return (Number(amount) || 0).toLocaleString("de-DE") + " so‘m";
+}
+
+function formatMoneyInput(amount) {
+    return String(amount || "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function updateTotalFee() {
+    const sum = students.reduce(
+        (total, student) => total + (Number(student.monthlyFee) || 0), 0
+    );
+
+    document.getElementById("totalFee").textContent = formatMoney(sum);
+}
+
+function editStudent(id, field, value) {
+    const student = students.find(s => s.id === id);
+    if (!student) return;
+
+    student[field] = value;
+    saveStudents();
+    updateTotalFee();
+}
+
+function formatFeeInput(input, id) {
+    const digits = input.value.replace(/\D/g, "");
+    const student = students.find(s => s.id === id);
+    if (!student) return;
+
+    student.monthlyFee = Number(digits) || 0;
+    input.value = formatMoneyInput(digits);
+
+    saveStudents();
+    updateTotalFee();
+}
+
+function changeMark(id, day) {
+    const key = `${monthPicker.value}_${id}_${day}`;
+
+    const answer = prompt(
+        "Davomat:\n+ = Keldi\n- = Kelmadi\n0 = Belgini o‘chirish"
+    );
+
+    if (answer === null) return;
+
+    if (answer === "+") {
+        attendance[key] = "+";
+    } else if (answer === "-") {
+        attendance[key] = "-";
+    } else if (answer === "0") {
+        delete attendance[key];
+    } else {
+        alert("Faqat +, - yoki 0 kiriting!");
+        return;
+    }
+
+    saveAttendance();
+    render();
+}
 
 function render() {
-  const days = daysInMonth();
-  let head = `<tr>
-    <th>№</th><th>Ism-familiya</th><th>Sinf</th><th>Yili</th>
-    <th>Raqami</th><th>Ota-ona</th>`;
-  for (let d = 1; d <= days; d++) {
-    const date = new Date(Number(monthKey().slice(0,4)), Number(monthKey().slice(5,7))-1, d);
-    const weekdays = ["Ya","Du","Se","Ch","Pa","Ju","Sh"];
-    head += `<th>${d}<br>${weekdays[date.getDay()]}</th>`;
-  }
-  head += `<th>Kelgan</th><th>Kelmagan</th></tr>`;
-  tableHead.innerHTML = head;
+    if (!monthPicker.value) return;
 
-  let body = "";
-  let allPresent = 0, allAbsent = 0;
-  students.forEach(student => {
-    let present = 0, absent = 0;
-    let row = `<tr>
-      <td>${student.id}</td>
-      <td class="name">${student.name}</td>
-      <td>${student.className || "—"}</td>
-      <td>${student.year || "—"}</td>
-      <td>${student.number || "—"}</td>
-      <td>${student.parent || "—"}</td>`;
-    for (let d = 1; d <= days; d++) {
-      const mark = attendance[cellKey(student.id, d)] || "";
-      if (mark === "+") present++;
-      if (mark === "-") absent++;
-      const cls = mark === "+" ? "present" : mark === "-" ? "absent" : "empty";
-      row += `<td class="mark-cell ${cls}" data-student="${student.id}" data-day="${d}">${mark || "·"}</td>`;
+    const [year, month] = monthPicker.value.split("-").map(Number);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const weekdays = [
+        "Yakshanba", "Dushanba", "Seshanba",
+        "Chorshanba", "Payshanba", "Juma", "Shanba"
+    ];
+
+    // HAFTA KUNLARI TEPADA
+    let head = `
+        <tr>
+            <th rowspan="2">№</th>
+            <th rowspan="2">Ism familiya</th>
+            <th rowspan="2">Sinf</th>
+            <th rowspan="2">Yil</th>
+            <th rowspan="2">Telefon</th>
+            <th rowspan="2">Ota-ona</th>
+            <th rowspan="2">To‘lov</th>
+    `;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month - 1, day);
+        head += `
+            <th class="day-column">
+                <span class="weekday-name">${weekdays[date.getDay()]}</span>
+            </th>
+        `;
     }
-    allPresent += present;
-    allAbsent += absent;
-    row += `<td class="count">${present}</td><td class="count">${absent}</td></tr>`;
-    body += row;
-  });
-  tableBody.innerHTML = body;
-  document.getElementById("studentTotal").textContent = students.length;
-  document.getElementById("presentTotal").textContent = allPresent;
-  document.getElementById("absentTotal").textContent = allAbsent;
+
+    head += `
+            <th rowspan="2">Kelgan</th>
+            <th rowspan="2">Kelmagan</th>
+        </tr>
+        <tr>
+    `;
+
+    // SANALAR RAQAMI TEPADA EMAS, PASTKI SARLAVHA QATORIDA
+    for (let day = 1; day <= daysInMonth; day++) {
+        head += `<th class="date-number">${day}</th>`;
+    }
+
+    head += `</tr>`;
+
+    document.getElementById("tableHead").innerHTML = head;
+
+    let body = "";
+    let totalPresent = 0;
+    let totalAbsent = 0;
+
+    students.forEach((student, index) => {
+        let presentCount = 0;
+        let absentCount = 0;
+
+        let row = `
+            <tr>
+                <td>${index + 1}</td>
+                <td><input class="student-input" value="${escapeHTML(student.name)}"
+                    onchange="editStudent(${student.id}, 'name', this.value)"></td>
+                <td><input class="student-input" value="${escapeHTML(student.className)}"
+                    onchange="editStudent(${student.id}, 'className', this.value)"></td>
+                <td><input class="student-input" value="${escapeHTML(student.year)}"
+                    onchange="editStudent(${student.id}, 'year', this.value)"></td>
+                <td><input class="student-input" value="${escapeHTML(student.phone)}"
+                    onchange="editStudent(${student.id}, 'phone', this.value)"></td>
+                <td><input class="student-input" value="${escapeHTML(student.parent)}"
+                    onchange="editStudent(${student.id}, 'parent', this.value)"></td>
+                <td><input class="student-input" value="${formatMoneyInput(student.monthlyFee)}"
+                    oninput="formatFeeInput(this, ${student.id})"></td>
+        `;
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const key = `${monthPicker.value}_${student.id}_${day}`;
+            const mark = attendance[key] || "";
+
+            if (mark === "+") presentCount++;
+            if (mark === "-") absentCount++;
+
+            const cls = mark === "+" ? "present" : mark === "-" ? "absent" : "";
+
+            row += `
+                <td class="attendance-cell ${cls} mark"
+                    onclick="changeMark(${student.id}, ${day})">${mark}</td>
+            `;
+        }
+
+        totalPresent += presentCount;
+        totalAbsent += absentCount;
+
+        row += `
+            <td>${presentCount}</td>
+            <td>${absentCount}</td>
+            </tr>
+        `;
+
+        body += row;
+    });
+
+    document.getElementById("tableBody").innerHTML = body;
+
+    document.getElementById("total").textContent = students.length;
+    document.getElementById("present").textContent = totalPresent;
+    document.getElementById("absent").textContent = totalAbsent;
+
+    updateTotalFee();
 }
 
-tableBody.addEventListener("click", event => {
-  const cell = event.target.closest(".mark-cell");
-  if (!cell) return;
-  selectedCell = { student: cell.dataset.student, day: cell.dataset.day };
-  const student = students[Number(selectedCell.student) - 1];
-  selectedInfo.textContent = `${student.name} — ${selectedCell.day}-sana`;
-  dialog.showModal();
-});
+function addStudent() {
+    const newId = students.length
+        ? Math.max(...students.map(s => s.id)) + 1 : 1;
 
-document.querySelectorAll("[data-mark]").forEach(button => {
-  button.addEventListener("click", () => {
-    if (!selectedCell) return;
-    const key = cellKey(selectedCell.student, selectedCell.day);
-    const mark = button.dataset.mark;
-    if (mark) attendance[key] = mark;
-    else delete attendance[key];
-    save();
-    dialog.close();
+    students.push({
+        id: newId,
+        name: "",
+        className: "",
+        year: "",
+        phone: "",
+        parent: "",
+        monthlyFee: 0
+    });
+
+    saveStudents();
     render();
-  });
-});
+}
 
-document.querySelector(".close").addEventListener("click", () => dialog.close());
+function removeStudent() {
+    const number = prompt("Qaysi raqamdagi o‘quvchini o‘chirmoqchisiz?");
+    if (number === null) return;
+
+    const index = Number(number) - 1;
+
+    if (!Number.isInteger(index) || index < 0 || index >= students.length) {
+        alert("Bunday o‘quvchi yo‘q!");
+        return;
+    }
+
+    const student = students[index];
+
+    if (!confirm(`${number}-o‘quvchini o‘chirasizmi?`)) return;
+
+    students = students.filter(s => s.id !== student.id);
+
+    Object.keys(attendance).forEach(key => {
+        if (Number(key.split("_")[1]) === student.id) {
+            delete attendance[key];
+        }
+    });
+
+    saveStudents();
+    saveAttendance();
+    render();
+}
+
+const now = new Date();
+
+monthPicker.value =
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
 monthPicker.addEventListener("change", render);
-document.getElementById("resetMonth").addEventListener("click", () => {
-  if (!confirm("Tanlangan oyning barcha davomat belgilarini tozalaysizmi?")) return;
-  const prefix = monthKey() + "_";
-  Object.keys(attendance).forEach(key => { if (key.startsWith(prefix)) delete attendance[key]; });
-  save();
-  render();
-});
 
 render();
