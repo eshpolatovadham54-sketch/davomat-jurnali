@@ -1,0 +1,196 @@
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 15px;
+    font-family: Arial, sans-serif;
+    background: #f0f4f8;
+}
+
+header {
+    background: #155eef;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    border-radius: 12px;
+}
+
+header h1 {
+    margin: 0 0 8px;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+input, button {
+    padding: 10px;
+    border-radius: 7px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+button {
+    background: #155eef;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0040c1;
+}
+
+.delete-btn {
+    background: #dc2626;
+}
+
+.delete-btn:hover {
+    background: #991b1b;
+}
+
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.stats div {
+    background: white;
+    padding: 13px;
+    border-radius: 9px;
+    flex: 1;
+    min-width: 130px;
+}
+
+.table-container {
+    width: 100%;
+    overflow: auto;
+    background: white;
+    border-radius: 10px;
+    max-height: 75vh;
+}
+
+table {
+    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+    table-layout: fixed;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+}
+
+/* Yuqori sarlavha */
+thead th {
+    background: #dce8ff;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+/* O‘quvchi ustunlari */
+.info-no { width: 40px; }
+.info-name { width: 140px; }
+.info-class { width: 65px; }
+.info-year { width: 60px; }
+.info-phone { width: 115px; }
+.info-parent { width: 120px; }
+.info-fee { width: 105px; }
+
+/* Kun ustunlari */
+.day-column {
+    width: 42px;
+    min-width: 42px;
+    max-width: 42px;
+}
+
+/* Hafta kunlari tepada */
+.weekday-row th {
+    height: 95px;
+    vertical-align: bottom;
+    padding: 5px 2px;
+    background: #dce8ff;
+}
+
+.weekday-name {
+    display: inline-block;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+/* Sana raqamlari pastda */
+.date-bottom td {
+    height: 42px;
+    background: #dce8ff;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.date-bottom .date-label {
+    text-align: right;
+    padding-right: 15px;
+}
+
+/* O‘quvchi ma’lumotlari */
+.student-input {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 3px;
+    font-size: 12px;
+    border: 1px solid #ddd;
+}
+
+/* Davomat kataklari */
+.attendance-cell {
+    width: 42px;
+    min-width: 42px;
+    height: 32px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.present {
+    background: #c8f7d2;
+}
+
+.absent {
+    background: #ffcaca;
+}
+
+.mark {
+    font-size: 14px;
+}
+
+/* Pastki sana qatori */
+.date-bottom td {
+    position: static;
+}
+
+@media(max-width: 600px) {
+    body {
+        padding: 7px;
+    }
+
+    header h1 {
+        font-size: 21px;
+    }
+
+    .controls input,
+    .controls button {
+        width: 100%;
+    }
+}

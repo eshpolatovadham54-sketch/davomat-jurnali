@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Davomat jurnali</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>📚 DAVOMAT JURNALI</h1>
+    <p>O‘quvchilar davomati</p>
+</header>
+
+<main>
+    <section class="controls">
+        <input type="month" id="monthPicker">
+        <button onclick="addStudent()">+ O‘quvchi qo‘shish</button>
+        <button class="delete-btn" onclick="removeStudent()">− O‘quvchini ayirish</button>
+    </section>
+
+    <section class="stats">
+        <div>O‘quvchilar: <b id="total">0</b></div>
+        <div>Kelgan: <b id="present">0</b></div>
+        <div>Kelmagan: <b id="absent">0</b></div>
+        <div>Jami oylik to‘lov: <b id="totalFee">0 so‘m</b></div>
+    </section>
+
+    <div class="table-container">
+        <table>
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
